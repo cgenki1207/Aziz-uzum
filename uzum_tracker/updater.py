@@ -13,7 +13,7 @@ import zipfile
 
 from .config import DATA, ROOT
 
-REPO = ""        # masalan "foydalanuvchi/uzum-tracker" — GitHub'ga yuklangandan keyin to'ldiriladi
+REPO = "cgenki1207/Aziz-uzum"        # masalan "foydalanuvchi/uzum-tracker" — GitHub'ga yuklangandan keyin to'ldiriladi
 BRANCH = "main"
 SHA_FILE = DATA / "installed_sha"
 
