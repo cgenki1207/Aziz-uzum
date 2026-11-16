@@ -15,7 +15,7 @@ faqat sizning kompyuteringizda saqlanadi.
 
 1. **Python o'rnating** (bir marta): <https://www.python.org/downloads/>
    Windows'da o'rnatish oynasida **«Add Python to PATH»** belgisini qo'ying.
-2. Shu sahifaning yuqorisidagi yashil **Code → Download ZIP** tugmasini bosing va arxivni oching.
+2. Dasturni yuklab oling: **[ZIP yuklab olish](https://github.com/cgenki1207/Aziz-uzum/archive/refs/heads/main.zip)** va arxivni oching.
 3. Ishga tushiring:
    - **Windows:** `Uzum Tracker.bat` faylini ikki marta bosing.
    - **Mac:** `Uzum Tracker.command` faylini ikki marta bosing.
