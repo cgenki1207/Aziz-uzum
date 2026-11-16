@@ -34,12 +34,13 @@ def main():
     from uzum_tracker.web import serve
 
     cfg = config.load()
+    browser = "--no-browser" not in flags and not os.environ.get("UZUM_NO_BROWSER")
 
     if cmd == "demo":
         from uzum_tracker.demo import DemoApi
         store = Store(":memory:")
         run_sync(DemoApi(), store, log=lambda *a: None)
-        return serve(store, cfg, demo=True, open_browser="--no-browser" not in flags)
+        return serve(store, cfg, demo=True, open_browser=browser)
 
     store = Store(config.DATA / "uzum.db")
     if cmd == "sync":
@@ -64,7 +65,7 @@ def main():
         for w in r["warnings"]:
             print("! " + w)
     else:
-        serve(store, cfg, open_browser="--no-browser" not in flags)
+        serve(store, cfg, open_browser=browser)
 
 
 if __name__ == "__main__":

@@ -13,15 +13,33 @@ faqat sizning kompyuteringizda saqlanadi.
 
 ## O'rnatish
 
-1. **Python o'rnating** (bir marta): <https://www.python.org/downloads/>
-   Windows'da o'rnatish oynasida **«Add Python to PATH»** belgisini qo'ying.
-2. Dasturni yuklab oling: **[ZIP yuklab olish](https://github.com/cgenki1207/Aziz-uzum/archive/refs/heads/main.zip)** va arxivni oching.
-3. Ishga tushiring:
-   - **Windows:** `Uzum Tracker.bat` faylini ikki marta bosing.
-   - **Mac:** `Uzum Tracker.command` faylini ikki marta bosing.
-     (Birinchi marta «ochib bo'lmaydi» desa: faylni o'ng tugma bilan bosib → **Open**.)
-4. Brauzerda panel ochiladi. Uzum Seller API kalitingizni kiriting
+### Mac
+
+1. **Terminal** dasturini oching (Cmd+Probel bosib, `Terminal` deb yozing).
+2. Quyidagi qatordan nusxa olib, Terminalga qo'ying va Enter bosing:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/cgenki1207/Aziz-uzum/main/install.sh | bash
+   ```
+
+3. Brauzerda panel ochiladi. Uzum Seller API kalitingizni kiriting
    (seller.uzum.uz → Sozlamalar → API kalitlari). Birinchi yuklash 1–2 daqiqa oladi.
+
+Keyingi safar ish stolidagi **«Uzum Tracker»** belgisini ikki marta bosing.
+
+Agar «Python topilmadi» desa: <https://www.python.org/downloads/> dan o'rnatib, 2-qadamni takrorlang.
+
+> ZIP yuklab, faylni ikki marta bosish Mac'da ishlamaydi: macOS internetdan kelgan,
+> Apple'da ro'yxatdan o'tmagan dasturlarni bloklaydi. Shuning uchun yuqoridagi usuldan foydalaning.
+
+### Windows
+
+1. **Python o'rnating** (bir marta): <https://www.python.org/downloads/>
+   O'rnatish oynasida **«Add Python to PATH»** belgisini qo'ying.
+2. Dasturni yuklab oling: **[ZIP yuklab olish](https://github.com/cgenki1207/Aziz-uzum/archive/refs/heads/main.zip)** va arxivni oching.
+3. `Uzum Tracker.bat` faylini ikki marta bosing.
+   («Windows protected your PC» chiqsa: **More info → Run anyway**.)
+4. Brauzerda panel ochiladi, API kalitingizni kiriting.
 
 Qora oyna (terminal) ochiq turishi kerak — uni yopsangiz dastur to'xtaydi.
 
