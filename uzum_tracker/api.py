@@ -17,8 +17,12 @@ FBS_INVOICE_STATUSES = ["CREATED", "ACCEPTANCE_IN_PROGRESS", "CANCELLED", "ACCEP
 
 class ApiError(Exception):
     def __init__(self, status, path, body):
-        super().__init__(f"HTTP {status} {path}: {body[:300]}")
+        # Uzum oldidagi himoya tizimi (Cloudflare) bloklasa, JSON emas HTML sahifa qaytadi
+        self.blocked = status in (403, 429) and "<html" in body[:2000].lower()
+        super().__init__("Uzum serveri so'rovlarni vaqtincha blokladi. Birozdan keyin qayta urinib ko'ring."
+                         if self.blocked else f"HTTP {status} {path}: {body[:300]}")
         self.status = status
+        self.bad_key = status in (401, 403) and not self.blocked
 
 
 def unwrap(data):
@@ -41,7 +45,7 @@ def as_list(data, *keys):
 
 
 class UzumApi:
-    def __init__(self, token, pause=0.25):
+    def __init__(self, token, pause=0.4):
         self.token = token.strip()
         self.pause = pause
 
@@ -55,6 +59,7 @@ class UzumApi:
                 "Authorization": self.token,
                 "Accept": "application/json",
                 "Accept-Language": "uz",
+                "User-Agent": "uzum-tracker/1.0 (seller openapi client)",
             })
             try:
                 with urllib.request.urlopen(req, timeout=60) as r:

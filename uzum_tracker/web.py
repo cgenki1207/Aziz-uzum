@@ -29,7 +29,7 @@ def serve(store, cfg, demo=False, open_browser=False):
             run_sync(api, store, cfg.get("shop_id"), cfg.get("days", 0), log=state["log"].append)
         except ApiError as e:
             state["error"] = ("API kaliti noto'g'ri yoki muddati o'tgan — «API kaliti» tugmasi orqali yangilang."
-                              if e.status in (401, 403) else str(e))
+                              if e.bad_key else str(e))
         except Exception as e:
             state["error"] = str(e)
         finally:
@@ -58,7 +58,8 @@ def serve(store, cfg, demo=False, open_browser=False):
         try:
             shops = api.shops()
         except ApiError as e:
-            msg = ("Kalit noto'g'ri yoki bu kalitga do'kon ruxsati berilmagan." if e.status in (401, 403)
+            msg = ("Kalit noto'g'ri yoki bu kalitga do'kon ruxsati berilmagan." if e.bad_key
+                   else str(e) if e.blocked
                    else "Uzum serveriga ulanib bo'lmadi. Internetni tekshirib, qayta urinib ko'ring.")
             return 400, {"error": msg}
         if not shops:
