@@ -28,7 +28,7 @@ Qora oyna (terminal) ochiq turishi kerak — uni yopsangiz dastur to'xtaydi.
 ## Yangilanish
 
 Dastur har ochilganda yangi versiyani o'zi tekshiradi va o'zi yangilanadi.
-Hech narsa qilish shart emas — yopib qayta ochsangiz bo'ldi.
+Hech narsa qilish shart emas — yopib qayta ochsangiz bo'ldi. Panel tepasida hozirgi versiya raqami ko'rinadi.
 
 ## Sozlamalar
 
