@@ -1,0 +1,7 @@
+.env
+*.log
+.DS_Store
+*.db
+__pycache__/
+.claude/
+.dev

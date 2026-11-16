@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uzum tovar kuzatuvi</title>
+<style>
+:root{--bg:#f3f3f7;--card:#fff;--ink:#17171c;--mute:#6b6b78;--line:#e4e4ec;--accent:#7000ff;--bad:#d92d20;--badbg:#fdecea;--warn:#b54708;--warnbg:#fff4e0;--ok:#067647;--okbg:#e6f6ee}
+@media (prefers-color-scheme:dark){:root{--bg:#121216;--card:#1c1c23;--ink:#f0f0f5;--mute:#9a9aa8;--line:#2e2e39;--accent:#a871ff;--bad:#ff7066;--badbg:#3a1a18;--warn:#ffb057;--warnbg:#3a2a12;--ok:#4cd694;--okbg:#12301f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 24px}
+h1{font-size:22px;margin:0}
+.sub{color:var(--mute);font-size:13px}
+main{padding:0 24px 48px;max-width:1500px;margin:auto}
+button{font:inherit;border:0;border-radius:10px;padding:9px 16px;cursor:pointer;background:var(--accent);color:#fff;font-weight:600}
+button.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
+.card{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
+.card .k{color:var(--mute);font-size:13px}
+.card .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.card .d{font-size:13px;color:var(--mute)}
+.card.bad{background:var(--badbg);border-color:transparent}.card.bad .v{color:var(--bad)}
+.card.warn{background:var(--warnbg);border-color:transparent}.card.warn .v{color:var(--warn)}
+.eq{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-variant-numeric:tabular-nums}
+.eq b{font-size:18px}.eq span{color:var(--mute)}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.bad{background:var(--badbg);color:var(--bad)}.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.ok{background:var(--okbg);color:var(--ok)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 10px}
+.tab{background:transparent;color:var(--ink);font-weight:500;padding:8px 14px;border-radius:99px}
+.tab.on{background:var(--ink);color:var(--bg)}
+.tab i{font-style:normal;background:var(--line);color:var(--ink);border-radius:99px;padding:1px 8px;margin-left:6px;font-size:12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.bar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;flex-wrap:wrap}
+.bar p{margin:0;color:var(--mute);font-size:13px;max-width:900px}
+input[type=search]{font:inherit;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:220px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:9px 12px;text-align:left;border-top:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--mute);font-weight:600;white-space:nowrap;cursor:pointer;user-select:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.late td{background:var(--badbg)}
+.empty{padding:28px;text-align:center;color:var(--mute)}
+.warnbox{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.statuses{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.statuses span{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 12px;font-size:13px}
+.statuses b{margin-left:6px}
+.overlay{position:fixed;inset:0;background:var(--bg);display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.overlay.on{display:flex}
+.setup{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;max-width:520px;width:100%}
+.setup h2{margin:0 0 6px;font-size:22px}
+.setup ol{padding-left:20px;color:var(--mute);font-size:14px;margin:12px 0 18px}
+.setup li{margin:4px 0}
+.setup input{width:100%;font:inherit;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:12px}
+.setup .err{color:var(--bad);font-size:14px;min-height:20px;margin-bottom:8px}
+.setup .row{display:flex;gap:10px;align-items:center}
+.setup small{color:var(--mute);display:block;margin-top:14px}
+.upd{background:var(--okbg);color:var(--ok);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Uzum tovar kuzatuvi</h1><div class="sub" id="meta">Yuklanmoqda…</div></div>
+  <div><button class="ghost" id="keyBtn">API kaliti</button> <button id="syncBtn">Uzumdan yangilash</button></div>
+</header>
+<div class="overlay" id="overlay">
+  <form class="setup" id="setupForm">
+    <h2>Uzum tovar kuzatuvi</h2>
+    <div class="sub">Boshlash uchun Uzum Seller API kalitingizni kiriting.</div>
+    <ol>
+      <li>seller.uzum.uz kabinetiga kiring</li>
+      <li>Sozlamalar → «API kalitlari» bo'limini oching</li>
+      <li>Yangi kalit yarating (o'qish huquqi yetarli) va nusxasini oling</li>
+      <li>Shu yerga qo'ying</li>
+    </ol>
+    <input id="tokenInput" type="password" autocomplete="off" placeholder="API kaliti" required>
+    <div class="err" id="setupErr"></div>
+    <div class="row"><button id="setupBtn">Ulash</button><button type="button" class="ghost" id="setupCancel" style="display:none">Bekor qilish</button></div>
+    <small>Kalit faqat shu kompyuterda saqlanadi va faqat Uzum serveriga yuboriladi. Dastur Uzumda hech narsani o'zgartirmaydi — faqat o'qiydi.</small>
+  </form>
+</div>
+<main>
+  <div id="warn"></div>
+  <div class="statuses" id="statuses"></div>
+  <div class="cards" id="cards"></div>
+  <div class="eq" id="eq"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="panel">
+    <div class="bar"><p id="hint"></p><div><input type="search" id="q" placeholder="Qidirish…"> <button class="ghost" id="csv">Excel (CSV)</button></div></div>
+    <div class="scroll" id="table"></div>
+  </div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const nf=new Intl.NumberFormat('ru-RU');
+const num=v=>nf.format(Math.round(v||0));
+const som=v=>num(v)+" so'm";
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let R=null,tab='unreturned',sortKey=null,sortDir=-1;
+
+const TABS={
+ unreturned:{name:"Qaytmagan tovarlar",hint:"Uzum qabul qilgan, keyin xaridor olmagan yoki qaytargan buyurtmalar. Tovar sizga qaytishi kerak, lekin hali qaytarish yuk xatiga tushmagan. Qizil qatorlar — muddati o'tgan: Uzumga da'vo qilish uchun ro'yxat (Excelga yuklab oling).",
+  rows:r=>r.unreturned,late:true,cols:[["order_id","Buyurtma"],["public_id","Buyurtma IDsi"],["article","Tovar kodi"],["title","Tovar"],["date","Qaytgan sana"],["days","Kun",1],["units_missing","Hisobsiz dona",1],["units_pending","Yuk xatida",1],["value","Summa",2],["verdict","Xulosa",3],["ret_id","Yuk xati"]]},
+ not_accepted:{name:"Qabulda sanalmagan",hint:"Topshirish yuk xati «Qabul qilingan» bo'lgan, lekin ichidagi shu buyurtmani Uzum sanamagan va keyin ham hech qaysi yuk xatida qabul qilmagan. Agar siz bu tovarni haqiqatan topshirgan bo'lsangiz — u aynan qabul paytida yo'qolgan.",
+  rows:r=>r.not_accepted,late:true,cols:[["invoice","Yuk xati"],["date","Qabul sanasi"],["order_id","Buyurtma"],["public_id","Buyurtma IDsi"],["article","Tovar kodi"],["units","Dona",1],["value","Summa",2],["status","Hozirgi holat"],["cancelled","Bekor sanasi"],["reason","Sabab"],["verdict","Xulosa",3]]},
+ stuck_transit:{name:"Uzumda yo'lda",hint:"Uzum qabul qilgan, lekin hali xaridor punktiga yetib bormagan buyurtmalar. Qizil qatorlar belgilangan muddatdan uzoq turib qolgan.",
+  rows:r=>r.stuck_transit,late:true,cols:[["order_id","Buyurtma"],["public_id","Buyurtma IDsi"],["items","Tovar"],["status","Holat"],["since","Qachondan"],["days","Kun",1],["units","Dona",1],["value","Summa",2],["invoice","Yuk xati"]]},
+ stuck_pickup:{name:"Punktda kutyapti",hint:"«Topshirishni kutyapti» — tovar topshirish punktida, xaridor olib ketmagan. Qizil qatorlar juda uzoq turgan: yo sizga qaytishi kerak, yo yo'qolgan.",
+  rows:r=>r.stuck_pickup,late:true,cols:[["order_id","Buyurtma"],["public_id","Buyurtma IDsi"],["items","Tovar"],["since","Qachondan"],["days","Kun",1],["units","Dona",1],["value","Summa",2]]},
+ sku:{name:"Tovarlar balansi",hint:"Har bir tovar bo'yicha: Uzum qabul qilgan = sotilgan + yo'lda + punktda + qaytishi kerak. «Uzum qabul qilgan» ustunini o'zingizdagi «berganim» soni bilan solishtiring. «Ortiqcha qaytgan» — buyurtmaga bog'lanmagan qaytish (boshqa tovar o'rniga kelgan bo'lishi mumkin).",
+  rows:r=>r.sku,cols:[["article","Tovar kodi (SKU)"],["sku","SKU ID"],["barcode","Shtrix-kod"],["title","Tovar"],["handed","Uzum qabul qilgan",1],["sold","Sotilgan",1],["transit","Yo'lda",1],["pickup","Punktda",1],["owed","Qaytishi kerak",1],["ret_done","Qaytdi (bajarildi)",1],["ret_pending","Yuk xatida",1],["missing","Hisobsiz",1],["lost","Yo'qolgan",1],["lost_value","Yo'qolgan summa",2],["ret_extra","Ortiqcha qaytgan",1]]},
+ fbs_invoices:{name:"Topshirish yuk xatlari",hint:"Har bir topshirish yuk xati: nechta dona yozilgan, Uzum nechtasini qabul qilgan, nechtasini sanamagan. O'zingiz topshirgan son bilan solishtiring.",
+  rows:r=>r.fbs_invoices,cols:[["number","Yuk xati"],["status","Holat"],["created","Yaratilgan"],["accepted_date","Qabul sanasi"],["total","Jami dona",1],["accepted","Qabul qilingan",1],["not_accepted","Sanalmagan",1],["cancelled","Bekor",1],["in_progress","Jarayonda",1],["point","Qabul punkti"]]},
+ returns:{name:"Qaytarish yuk xatlari",hint:"Uzumdan sizga qaytarilgan tovarlar yuk xatlari. «bajarildi» — tovar hisobdan yopilgan.",
+  rows:r=>r.returns,cols:[["id","Yuk xati"],["type","Turi"],["state","Holat",3],["status","Uzum holati"],["created","Yaratilgan"],["completed","Bajarilgan"],["units","Dona",1]]},
+ fbo_invoices:{name:"FBO ta'minot",hint:"Uzum omboriga (FBO) yuborgan ta'minot yuk xatlari: yuborilgan va qabul qilingan dona farqi.",
+  rows:r=>r.fbo_invoices,cols:[["id","Yuk xati"],["date","Sana"],["status","Holat"],["sent","Yuborilgan",1],["accepted","Qabul qilingan",1],["diff","Farq",1],["accepted_date","Qabul sanasi"]]},
+};
+
+function cell(row,[k,,t]){
+  const v=row[k];
+  if(t===1) return `<td class="n">${v?num(v):'<span style="opacity:.35">0</span>'}</td>`;
+  if(t===2) return `<td class="n">${v?som(v):''}</td>`;
+  if(t===3){const s=String(v);const c=/YO'QOLGAN|bekor$|da'vo|tekshiring/.test(s)?'bad':/Hali|jarayonda|oldin/i.test(s)?'warn':'ok';return `<td><span class="pill ${c}">${esc(s)}</span></td>`}
+  return `<td>${esc(v)}</td>`;
+}
+function rowsFor(){
+  const T=TABS[tab];let rows=(T.rows(R)||[]).slice();
+  const q=$('q').value.trim().toLowerCase();
+  if(q) rows=rows.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q)));
+  if(sortKey) rows.sort((a,b)=>{const x=a[sortKey],y=b[sortKey];return (typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y)))*sortDir});
+  return rows;
+}
+function draw(){
+  if(!R) return;
+  const s=R.summary,c=R.cfg;
+  $('meta').textContent=(R.shops.map(x=>x.name).join(', ')||'')+' · Oxirgi yangilanish: '+(R.last_sync||'hali yo\'q')+(R.sync.running?' · yangilanmoqda…':'')+(R.version?' · versiya '+R.version:'');
+  $('keyBtn').style.display=R.sync.enabled?'':'none';
+  $('syncBtn').disabled=R.sync.running||!R.sync.enabled;
+  $('syncBtn').textContent=R.sync.running?'Yangilanmoqda…':(R.sync.enabled?'Uzumdan yangilash':'Namuna rejimi');
+  $('warn').dataset.v=R.version||'';
+  const w=R.warnings.concat(R.sync.error?['Xato: '+R.sync.error]:[]);
+  $('warn').innerHTML=(R.update?'<div class="upd">Yangi versiya chiqdi. Dasturni yopib qayta ochsangiz, o\'zi yangilanadi.</div>':'')+w.map(x=>`<div class="warnbox">${esc(x)}</div>`).join('');
+  $('statuses').innerHTML=R.status_counts.filter(x=>x.n).map(x=>`<span>${esc(x.name)}<b>${num(x.n)}</b></span>`).join('');
+  $('cards').innerHTML=[
+    ['bad',"Yo'qolgan (qaytmagan)",num(s.lost)+' dona',som(s.lost_value)+` · ${c.return_days} kundan oshgan`],
+    ['warn',"Hali qaytmagan, hisobsiz",num(s.missing-s.lost)+' dona',"muddat ichida, kuzatuvda"],
+    [s.late_transit?'bad':'',"Yo'lda turib qolgan",num(s.late_transit)+' buyurtma',som(s.late_transit_value)+` · ${c.transit_days} kundan oshgan`],
+    [s.late_pickup?'warn':'',"Punktda turib qolgan",num(s.late_pickup)+' buyurtma',som(s.late_pickup_value)+` · ${c.pickup_days} kundan oshgan`],
+    [s.not_accepted?'warn':'',"Uzum sanamagan (qabulda)",num(s.not_accepted)+' dona',som(s.not_accepted_value)+" · topshirgan bo'lsangiz da'vo"],
+  ].map(([cl,k,v,d])=>`<div class="card ${cl}"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
+  $('eq').innerHTML=`<span>Uzum qabul qilgan</span><b>${num(s.handed)}</b><span>=</span><span>sotilgan</span><b>${num(s.sold)}</b><span>+ yo'lda</span><b>${num(s.transit)}</b><span>+ punktda</span><b>${num(s.pickup)}</b><span>+ qaytishi kerak</span><b>${num(s.owed)}</b>
+   <span style="flex-basis:100%;height:0"></span><span>Qaytishi kerak ${num(s.owed)} dan:</span><span class="pill ok">bajarildi ${num(s.ret_done)}</span><span class="pill warn">yuk xatida ${num(s.ret_pending)}</span><span class="pill bad">hisobsiz ${num(s.missing)}</span><span>· Uzum odatda ${s.return_lag_median??'?'} kunda qaytaradi (90% hollarda ${s.return_lag_p90??'?'} kungacha)</span>`;
+  $('tabs').innerHTML=Object.entries(TABS).map(([k,T])=>{const n=(T.rows(R)||[]).length;const l=T.late?(T.rows(R)||[]).filter(r=>r.late).length:n;
+    return `<button class="tab ${k===tab?'on':''}" data-t="${k}">${T.name}<i>${T.late?l+' / '+n:n}</i></button>`}).join('');
+  const T=TABS[tab],rows=rowsFor();
+  $('hint').textContent=T.hint;
+  $('table').innerHTML=rows.length?`<table><thead><tr>${T.cols.map(c=>`<th class="${c[2]===1||c[2]===2?'n':''}" data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir>0?' ↑':' ↓'):''}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,1500).map(r=>`<tr class="${r.late?'late':''}">${T.cols.map(c=>cell(r,c)).join('')}</tr>`).join('')}</tbody></table>`:'<div class="empty">Bu yerda hech narsa yo\'q</div>';
+}
+let forced=false;
+function showSetup(on,cancel){$('overlay').classList.toggle('on',on);$('setupCancel').style.display=cancel?'':'none';if(on)$('tokenInput').focus()}
+async function load(){try{const d=await (await fetch('/api/report')).json();
+  if(d.setup){R=null;showSetup(true,false);return}
+  R=d;if(!forced)showSetup(false);draw()}catch(e){$('meta').textContent='Dastur bilan aloqa yo\'q — u yopilgan bo\'lishi mumkin'}}
+$('keyBtn').onclick=()=>{forced=true;$('setupErr').textContent='';showSetup(true,true)};
+$('setupCancel').onclick=()=>{forced=false;showSetup(false)};
+$('setupForm').onsubmit=async e=>{e.preventDefault();const b=$('setupBtn');b.disabled=true;b.textContent='Tekshirilmoqda…';$('setupErr').textContent='';
+  try{const r=await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:$('tokenInput').value})});const d=await r.json();
+    if(!r.ok){$('setupErr').textContent=d.error||'Xato'}else{$('tokenInput').value='';forced=false;showSetup(false);$('meta').textContent='Ulandi: '+d.shops.join(', ')+'. Ma\'lumotlar yuklanmoqda, 1–2 daqiqa kuting…';setTimeout(load,1500)}
+  }catch(x){$('setupErr').textContent='Dastur bilan aloqa yo\'q'}
+  b.disabled=false;b.textContent='Ulash'};
+$('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b){tab=b.dataset.t;sortKey=null;draw()}};
+$('table').onclick=e=>{const th=e.target.closest('th');if(th){const k=th.dataset.k;sortDir=sortKey===k?-sortDir:-1;sortKey=k;draw()}};
+$('q').oninput=draw;
+$('syncBtn').onclick=async()=>{await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});setTimeout(load,800)};
+$('csv').onclick=()=>{const T=TABS[tab];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const txt=[T.cols.map(c=>q(c[1])).join(';')].concat(rowsFor().map(r=>T.cols.map(c=>q(r[c[0]])).join(';'))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+txt],{type:'text/csv'}));a.download='uzum-'+tab+'.csv';a.click()};
+load();setInterval(load,15000);
+</script>
+</body>
+</html>
