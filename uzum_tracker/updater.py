@@ -12,6 +12,7 @@ import urllib.request
 import zipfile
 
 from .config import DATA, ROOT
+from .net import context
 
 REPO = "cgenki1207/Aziz-uzum"        # masalan "foydalanuvchi/uzum-tracker" — GitHub'ga yuklangandan keyin to'ldiriladi
 BRANCH = "main"
@@ -21,7 +22,7 @@ SHA_FILE = DATA / "installed_sha"
 def _get(url, timeout, accept=None):
     req = urllib.request.Request(url, headers={"User-Agent": "git/2.0 (uzum-tracker-updater)",
                                                **({"Accept": accept} if accept else {})})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with urllib.request.urlopen(req, timeout=timeout, context=context()) as r:
         return r.read()
 
 

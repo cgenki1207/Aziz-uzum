@@ -62,7 +62,7 @@ tr.late td{background:var(--badbg)}
 <body>
 <header>
   <div><h1>Uzum tovar kuzatuvi</h1><div class="sub" id="meta">Yuklanmoqda…</div></div>
-  <div><button class="ghost" id="keyBtn">API kaliti</button> <button id="syncBtn">Uzumdan yangilash</button></div>
+  <div><button class="ghost" id="quitBtn">To'xtatish</button> <button class="ghost" id="keyBtn">API kaliti</button> <button id="syncBtn">Uzumdan yangilash</button></div>
 </header>
 <div class="overlay" id="overlay">
   <form class="setup" id="setupForm">
@@ -141,7 +141,7 @@ function draw(){
   $('syncBtn').textContent=R.sync.running?'Yangilanmoqda…':(R.sync.enabled?'Uzumdan yangilash':'Namuna rejimi');
   $('warn').dataset.v=R.version||'';
   const w=R.warnings.concat(R.sync.error?['Xato: '+R.sync.error]:[]);
-  $('warn').innerHTML=(R.update?'<div class="upd">Yangi versiya chiqdi. Dasturni yopib qayta ochsangiz, o\'zi yangilanadi.</div>':'')+w.map(x=>`<div class="warnbox">${esc(x)}</div>`).join('');
+  $('warn').innerHTML=(R.update?'<div class="upd">Yangi versiya chiqdi. <button id="updBtn" style="margin-left:8px;padding:5px 12px">Hozir yangilash</button></div>':'')+w.map(x=>`<div class="warnbox">${esc(x)}</div>`).join('');
   $('statuses').innerHTML=R.status_counts.filter(x=>x.n).map(x=>`<span>${esc(x.name)}<b>${num(x.n)}</b></span>`).join('');
   $('cards').innerHTML=[
     ['bad',"Yo'qolgan (qaytmagan)",num(s.lost)+' dona',som(s.lost_value)+` · ${c.return_days} kundan oshgan`],
@@ -162,13 +162,19 @@ let forced=false;
 function showSetup(on,cancel){$('overlay').classList.toggle('on',on);$('setupCancel').style.display=cancel?'':'none';if(on)$('tokenInput').focus()}
 async function load(){try{const d=await (await fetch('/api/report')).json();
   if(d.setup){R=null;showSetup(true,false);return}
-  R=d;if(!forced)showSetup(false);draw()}catch(e){$('meta').textContent='Dastur bilan aloqa yo\'q — u yopilgan bo\'lishi mumkin'}}
+  R=d;if(!forced)showSetup(false);draw()}catch(e){offline()}}
+const OFF="Dastur ishlamayapti. Ish stolidagi «Uzum Tracker» ni (Windows'da «Uzum Tracker.bat») qayta oching, keyin shu sahifani yangilang.";
+function offline(){$('meta').textContent=OFF;$('setupErr').textContent=OFF}
+const post=p=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+$('quitBtn').onclick=async()=>{if(!confirm("Dastur to'xtatilsinmi? Qayta ochish uchun «Uzum Tracker» ni bosasiz."))return;try{await post('/api/quit')}catch(e){}stopped=true;document.body.innerHTML='<div class="empty" style="padding:80px 20px">Dastur to\'xtatildi. Qayta ochish uchun «Uzum Tracker» ni bosing.</div>'};
+$('warn').onclick=async e=>{if(e.target.id!=='updBtn')return;e.target.disabled=true;e.target.textContent='Yangilanmoqda…';try{await post('/api/restart')}catch(x){}setTimeout(()=>location.reload(),9000)};
+let stopped=false;
 $('keyBtn').onclick=()=>{forced=true;$('setupErr').textContent='';showSetup(true,true)};
 $('setupCancel').onclick=()=>{forced=false;showSetup(false)};
 $('setupForm').onsubmit=async e=>{e.preventDefault();const b=$('setupBtn');b.disabled=true;b.textContent='Tekshirilmoqda…';$('setupErr').textContent='';
   try{const r=await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:$('tokenInput').value})});const d=await r.json();
     if(!r.ok){$('setupErr').textContent=d.error||'Xato'}else{$('tokenInput').value='';forced=false;showSetup(false);$('meta').textContent='Ulandi: '+d.shops.join(', ')+'. Ma\'lumotlar yuklanmoqda, 1–2 daqiqa kuting…';setTimeout(load,1500)}
-  }catch(x){$('setupErr').textContent='Dastur bilan aloqa yo\'q'}
+  }catch(x){offline()}
   b.disabled=false;b.textContent='Ulash'};
 $('tabs').onclick=e=>{const b=e.target.closest('.tab');if(b){tab=b.dataset.t;sortKey=null;draw()}};
 $('table').onclick=e=>{const th=e.target.closest('th');if(th){const k=th.dataset.k;sortDir=sortKey===k?-sortDir:-1;sortKey=k;draw()}};
@@ -177,7 +183,7 @@ $('syncBtn').onclick=async()=>{await fetch('/api/sync',{method:'POST',headers:{'
 $('csv').onclick=()=>{const T=TABS[tab];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
   const txt=[T.cols.map(c=>q(c[1])).join(';')].concat(rowsFor().map(r=>T.cols.map(c=>q(r[c[0]])).join(';'))).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+txt],{type:'text/csv'}));a.download='uzum-'+tab+'.csv';a.click()};
-load();setInterval(load,15000);
+load();setInterval(()=>{if(!stopped)load()},15000);
 </script>
 </body>
 </html>

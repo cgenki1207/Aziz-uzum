@@ -1,5 +1,8 @@
 """Mahalliy veb-panel (faqat shu kompyuterda ochiladi: 127.0.0.1)."""
 import json
+import os
+import subprocess
+import sys
 import threading
 import time
 import webbrowser
@@ -56,7 +59,7 @@ def serve(store, cfg, demo=False, open_browser=False):
             return 400, {"error": "API kalitini to'liq kiriting."}
         api = UzumApi(token)
         try:
-            shops = api.shops()
+            shops = UzumApi(token, retries=1).shops()
         except ApiError as e:
             msg = ("Kalit noto'g'ri yoki bu kalitga do'kon ruxsati berilmagan." if e.bad_key
                    else str(e) if e.blocked
@@ -98,6 +101,8 @@ def serve(store, cfg, demo=False, open_browser=False):
             path = self.path.split("?")[0]
             if path == "/":
                 self.send(200, HTML.read_bytes(), "text/html")
+            elif path == "/api/ping":
+                self.send(200, {"app": "uzum-tracker"})
             elif path == "/api/report":
                 if state["api"] is None and not demo:
                     return self.send(200, {"setup": True, "version": state["version"]})
@@ -121,9 +126,20 @@ def serve(store, cfg, demo=False, open_browser=False):
                 wake.set() if not state["running"] else None
                 self.send(200, {})
             elif self.path == "/api/setup" and not demo:
-                self.send(*setup(body.get("token")))
+                try:
+                    self.send(*setup(body.get("token")))
+                except Exception as e:
+                    self.send(500, {"error": f"Kutilmagan xato: {e}"})
+            elif self.path in ("/api/quit", "/api/restart"):
+                self.send(200, {})
+                threading.Thread(target=stop, args=(self.path == "/api/restart",), daemon=True).start()
             else:
                 self.send(404, {"error": "topilmadi"})
+
+    def stop(restart):
+        time.sleep(0.3)
+        state["restart"] = restart
+        state["srv"].shutdown()      # serve_forever qaytadi, davomi pastda asosiy oqimda
 
     srv = None
     for port in range(cfg["port"], cfg["port"] + 20):
@@ -134,11 +150,16 @@ def serve(store, cfg, demo=False, open_browser=False):
             continue
     if srv is None:
         raise SystemExit("Bo'sh port topilmadi.")
+    state["srv"], state["port"] = srv, srv.server_address[1]
     url = f"http://localhost:{srv.server_address[1]}"
-    print(f"\nUzum tovar kuzatuvi ishlayapti:  {url}\n(Bu oynani yopmang. To'xtatish: Ctrl+C)\n")
+    print(f"\nUzum tovar kuzatuvi ishlayapti:  {url}\n(To'xtatish: paneldagi «To'xtatish» tugmasi yoki Ctrl+C)\n")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         print("\nTo'xtatildi.")
+    srv.server_close()
+    if state.get("restart"):         # yangi jarayon ochilishda o'zini GitHub'dan yangilaydi
+        subprocess.Popen([sys.executable, os.path.join(str(config.ROOT), "run.py"), "--no-browser"],
+                         env={**os.environ, "PORT": str(state["port"])})

@@ -41,12 +41,16 @@ Agar «Python topilmadi» desa: <https://www.python.org/downloads/> dan o'rnatib
    («Windows protected your PC» chiqsa: **More info → Run anyway**.)
 4. Brauzerda panel ochiladi, API kalitingizni kiriting.
 
-Qora oyna (terminal) ochiq turishi kerak — uni yopsangiz dastur to'xtaydi.
+Mac'da dastur orqa fonda ishlaydi: Terminal oynasini yopsangiz ham to'xtamaydi.
+To'xtatish uchun paneldagi **«To'xtatish»** tugmasini bosing.
+Windows'da qora oyna ochiq turishi kerak — uni yopsangiz dastur to'xtaydi.
+
+Agar panelda «Dastur ishlamayapti» chiqsa — dastur yopilgan. «Uzum Tracker» ni qayta oching.
 
 ## Yangilanish
 
 Dastur har ochilganda yangi versiyani o'zi tekshiradi va o'zi yangilanadi.
-Hech narsa qilish shart emas — yopib qayta ochsangiz bo'ldi. Panel tepasida hozirgi versiya raqami ko'rinadi.
+Dastur ochiq turgan bo'lsa, panelda «Hozir yangilash» tugmasi chiqadi. Panel tepasida hozirgi versiya raqami ko'rinadi.
 
 ## Sozlamalar
 

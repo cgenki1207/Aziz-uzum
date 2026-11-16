@@ -34,6 +34,19 @@ def main():
     from uzum_tracker.web import serve
 
     cfg = config.load()
+
+    if cmd == "serve":      # allaqachon ishlab turgan bo'lsa, ikkinchisini ochmaymiz
+        import json, urllib.request, webbrowser
+        for port in range(cfg["port"], cfg["port"] + 20):
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/ping", timeout=1) as r:
+                    if json.loads(r.read()).get("app") == "uzum-tracker":
+                        print(f"Dastur allaqachon ishlab turibdi: http://localhost:{port}")
+                        if "--no-browser" not in flags and not os.environ.get("UZUM_NO_BROWSER"):
+                            webbrowser.open(f"http://localhost:{port}")
+                        return
+            except Exception:
+                continue
     browser = "--no-browser" not in flags and not os.environ.get("UZUM_NO_BROWSER")
 
     if cmd == "demo":

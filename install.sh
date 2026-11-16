@@ -32,7 +32,14 @@ cp -R "$SRC/." "$DIR/"
 mkdir -p "$HOME/Desktop"
 cat > "$LAUNCHER" <<EOF
 #!/bin/bash
-cd "$DIR" && python3 run.py
+# Dastur orqa fonda ishlaydi — bu oynani yopsangiz ham to'xtamaydi.
+mkdir -p "\$HOME/.uzum-tracker"
+cd "$DIR" || exit 1
+nohup python3 run.py >> "\$HOME/.uzum-tracker/log.txt" 2>&1 &
+disown 2>/dev/null || true
+echo "Uzum Tracker ishga tushdi, brauzerda ochilmoqda."
+echo "Bu oynani yopishingiz mumkin. To'xtatish: paneldagi «To'xtatish» tugmasi."
+sleep 3
 EOF
 chmod +x "$LAUNCHER"
 
@@ -40,4 +47,4 @@ echo
 echo "Tayyor. Ish stolida «Uzum Tracker» paydo bo'ldi — keyingi safar shuni ikki marta bosing."
 echo "Hozir dastur ochilmoqda…"
 echo
-cd "$DIR" && exec python3 run.py
+exec "$LAUNCHER"

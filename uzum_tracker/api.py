@@ -5,6 +5,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from .net import context
+
 BASE = "https://api-seller.uzum.uz/api/seller-openapi"
 
 ORDER_STATUSES = [
@@ -45,9 +47,10 @@ def as_list(data, *keys):
 
 
 class UzumApi:
-    def __init__(self, token, pause=0.4):
-        self.token = token.strip()
+    def __init__(self, token, pause=0.4, retries=4):
+        self.token = "".join(token.split())
         self.pause = pause
+        self.retries = retries
 
     def get(self, path, **params):
         q = {k: (",".join(map(str, v)) if isinstance(v, (list, tuple)) else v)
@@ -62,7 +65,7 @@ class UzumApi:
                 "User-Agent": "uzum-tracker/1.0 (seller openapi client)",
             })
             try:
-                with urllib.request.urlopen(req, timeout=60) as r:
+                with urllib.request.urlopen(req, timeout=60, context=context()) as r:
                     body = r.read().decode("utf-8")
                 time.sleep(self.pause)
                 return json.loads(body) if body.strip() else None
@@ -73,9 +76,13 @@ class UzumApi:
                     time.sleep(2 * (attempt + 1))
                     continue
                 raise last
-            except (urllib.error.URLError, TimeoutError) as e:
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
                 last = ApiError(0, path, str(e))
+                if attempt >= self.retries:
+                    break
                 time.sleep(2 * (attempt + 1))
+            except (ValueError, UnicodeError) as e:   # kalit ichida bo'sh joy yoki noto'g'ri belgi
+                raise ApiError(401, path, f"kalit formati noto'g'ri: {e}")
         raise last
 
     # --- usullar ---
