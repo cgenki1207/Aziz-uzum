@@ -19,7 +19,7 @@ SHA_FILE = DATA / "installed_sha"
 
 
 def _get(url, timeout, accept=None):
-    req = urllib.request.Request(url, headers={"User-Agent": "uzum-tracker-updater",
+    req = urllib.request.Request(url, headers={"User-Agent": "git/2.0 (uzum-tracker-updater)",
                                                **({"Accept": accept} if accept else {})})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read()
@@ -40,8 +40,12 @@ def local_sha():
 
 
 def remote_sha(timeout=6):
-    return _get(f"https://api.github.com/repos/{REPO}/commits/{BRANCH}", timeout,
-                "application/vnd.github.sha").decode().strip()
+    """Oxirgi commit — git protokoli orqali (keshlanmaydi, so'rov limiti yo'q)."""
+    data = _get(f"https://github.com/{REPO}.git/info/refs?service=git-upload-pack", timeout).decode("utf-8", "replace")
+    for line in data.splitlines():
+        if line.rstrip().endswith(f" refs/heads/{BRANCH}"):
+            return line.split(" ")[0][-40:]
+    return ""
 
 
 def check():
