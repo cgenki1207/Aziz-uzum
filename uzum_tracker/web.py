@@ -1,15 +1,23 @@
-"""Mahalliy veb-panel (faqat shu kompyuterda ochiladi: 127.0.0.1)."""
+"""Veb-panel.
+
+Oddiy rejim: faqat shu kompyuterda ochiladi (127.0.0.1), parol yo'q.
+Server rejimi (UZUM_SERVER=1): internetga ochiq, APP_PASSWORD bilan kirish talab qilinadi.
+"""
+import gzip
+import hashlib
 import json
 import os
 import subprocess
 import sys
 import threading
 import time
+import urllib.parse
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from . import config, updater
+from .auth import COOKIE, LOGIN_HTML, TTL, Auth
 from .analyze import build_report
 from .api import ApiError, UzumApi
 from .sync import run_sync
@@ -18,6 +26,13 @@ HTML = Path(__file__).with_name("dashboard.html")
 
 
 def serve(store, cfg, demo=False, open_browser=False):
+    server = bool(os.environ.get("UZUM_SERVER"))
+    auth = None
+    if server:
+        pw = os.environ.get("APP_PASSWORD", "")
+        if len(pw) < 8:
+            raise SystemExit("Server rejimida APP_PASSWORD muhit o'zgaruvchisi kerak (kamida 8 belgi).")
+        auth = Auth(pw)
     state = {"running": False, "log": [], "error": None, "update": False,
              "api": UzumApi(cfg["token"]) if cfg.get("token") and not demo else None,
              "version": updater.local_sha()[:7]}
@@ -42,7 +57,7 @@ def serve(store, cfg, demo=False, open_browser=False):
         last_check = 0
         while True:
             do_sync()
-            if time.time() - last_check > 3 * 3600:      # yangi versiya chiqdimi?
+            if not server and time.time() - last_check > 3 * 3600:      # yangi versiya chiqdimi?
                 last_check = time.time()
                 state["update"] = updater.check()[0]
             wake.wait(max(cfg.get("sync_interval_min", 30), 5) * 60)
@@ -77,45 +92,117 @@ def serve(store, cfg, demo=False, open_browser=False):
         def log_message(self, *a):
             pass
 
-        def send(self, code, body, ctype="application/json"):
+        def send(self, code, body, ctype="application/json", headers=None, etag=None):
             if not isinstance(body, (bytes, str)):
                 body = json.dumps(body, ensure_ascii=False)
             data = body if isinstance(body, bytes) else body.encode("utf-8")
+            if etag and self.headers.get("If-None-Match") == etag:
+                code, data = 304, b""
+            gz = len(data) > 1024 and "gzip" in (self.headers.get("Accept-Encoding") or "")
+            if gz:
+                data = gzip.compress(data, 6)
             self.send_response(code)
             self.send_header("Content-Type", ctype + "; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
-            self.send_header("Cache-Control", "no-store")
+            self.send_header("Cache-Control", "no-cache" if etag else "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Referrer-Policy", "no-referrer")
+            if gz:
+                self.send_header("Content-Encoding", "gzip")
+                self.send_header("Vary", "Accept-Encoding")
+            if etag:
+                self.send_header("ETag", etag)
+            for k, v in (headers or {}).items():
+                self.send_header(k, v)
             self.end_headers()
-            self.wfile.write(data)
+            if code != 304:
+                self.wfile.write(data)
 
-        def local(self):
-            """Boshqa saytlar bu serverga so'rov yubora olmasligi uchun."""
-            host = (self.headers.get("Host") or "").split(":")[0]
+        def host(self):
+            return (self.headers.get("Host") or "").split(":")[0].lower()
+
+        def same_origin(self):
+            """Boshqa saytlar bu serverga brauzer orqali so'rov yubora olmasligi uchun."""
             origin = self.headers.get("Origin")
-            ok_origin = origin is None or origin.split("//")[-1].split(":")[0] in ("localhost", "127.0.0.1")
-            return host in ("localhost", "127.0.0.1") and ok_origin
+            if origin is None:
+                return True
+            o = urllib.parse.urlsplit(origin).hostname or ""
+            return o.lower() == self.host()
+
+        def allowed(self):
+            if server:
+                return self.same_origin()
+            return self.host() in ("localhost", "127.0.0.1") and self.same_origin() \
+                and (urllib.parse.urlsplit(self.headers.get("Origin") or "http://localhost").hostname
+                     in ("localhost", "127.0.0.1"))
+
+        def ip(self):
+            fwd = self.headers.get("X-Forwarded-For")
+            return fwd.split(",")[0].strip() if fwd else self.client_address[0]
+
+        def authed(self):
+            return auth is None or auth.valid(self.headers.get("Cookie"))
+
+        def https(self):
+            return self.headers.get("X-Forwarded-Proto", "").lower() == "https"
+
+        def login_page(self, err="", code=200):
+            self.send(code, LOGIN_HTML.replace("__ERR__", err), "text/html")
+
+        def report_etag(self):
+            last = (store.get_meta("last_sync") or {}).get("at")
+            key = f"{last}|{state['running']}|{state['error']}|{state['update']}|{len(state['log'])}|{state['version']}"
+            return '"' + hashlib.sha1(key.encode()).hexdigest()[:16] + '"'
 
         def do_GET(self):
-            if not self.local():
+            if not self.allowed():
                 return self.send(403, {"error": "ruxsat yo'q"})
             path = self.path.split("?")[0]
+            if path == "/api/ping":
+                return self.send(200, {"app": "uzum-tracker"})
+            if not self.authed():
+                if path.startswith("/api/"):
+                    return self.send(401, {"error": "login"})
+                return self.login_page()
             if path == "/":
                 self.send(200, HTML.read_bytes(), "text/html")
-            elif path == "/api/ping":
-                self.send(200, {"app": "uzum-tracker"})
             elif path == "/api/report":
                 if state["api"] is None and not demo:
                     return self.send(200, {"setup": True, "version": state["version"]})
+                etag = self.report_etag()
+                if self.headers.get("If-None-Match") == etag:
+                    return self.send(304, b"", etag=etag)
                 rep = build_report(store, cfg)
                 rep["sync"] = {"running": state["running"], "error": state["error"],
                                "log": state["log"][-8:], "enabled": not demo}
                 rep["version"], rep["update"] = state["version"], state["update"]
-                self.send(200, rep)
+                rep["server"] = server
+                self.send(200, rep, etag=etag)
+            elif path == "/logout":
+                self.send(303, b"", "text/plain", headers={
+                    "Location": "/", "Set-Cookie": f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict"})
             else:
                 self.send(404, {"error": "topilmadi"})
 
         def do_POST(self):
-            if not self.local() or "json" not in (self.headers.get("Content-Type") or ""):
+            if not self.allowed():
+                return self.send(403, {"error": "ruxsat yo'q"})
+            if self.path == "/login" and auth is not None:
+                n = min(int(self.headers.get("Content-Length") or 0), 4096)
+                form = urllib.parse.parse_qs(self.rfile.read(n).decode("utf-8", "replace"))
+                ip = self.ip()
+                if auth.blocked(ip):
+                    return self.login_page("Juda ko'p urinish. 15 daqiqadan keyin qayta urinib ko'ring.", 429)
+                if not auth.check(ip, (form.get("password") or [""])[0]):
+                    return self.login_page("Parol noto'g'ri.", 401)
+                secure = "; Secure" if self.https() else ""
+                return self.send(303, b"", "text/plain", headers={
+                    "Location": "/",
+                    "Set-Cookie": f"{COOKIE}={auth.new_session()}; Max-Age={TTL}; Path=/; HttpOnly; SameSite=Strict{secure}"})
+            if not self.authed():
+                return self.send(401, {"error": "login"})
+            if "json" not in (self.headers.get("Content-Type") or ""):
                 return self.send(403, {"error": "ruxsat yo'q"})
             n = int(self.headers.get("Content-Length") or 0)
             try:
@@ -130,7 +217,7 @@ def serve(store, cfg, demo=False, open_browser=False):
                     self.send(*setup(body.get("token")))
                 except Exception as e:
                     self.send(500, {"error": f"Kutilmagan xato: {e}"})
-            elif self.path in ("/api/quit", "/api/restart"):
+            elif self.path in ("/api/quit", "/api/restart") and not server:
                 self.send(200, {})
                 threading.Thread(target=stop, args=(self.path == "/api/restart",), daemon=True).start()
             else:
@@ -142,7 +229,9 @@ def serve(store, cfg, demo=False, open_browser=False):
         state["srv"].shutdown()      # serve_forever qaytadi, davomi pastda asosiy oqimda
 
     srv = None
-    for port in range(cfg["port"], cfg["port"] + 20):
+    if server:       # serverda port aniq beriladi, barcha tarmoqlarda tinglaydi
+        srv = ThreadingHTTPServer(("0.0.0.0", cfg["port"]), H)
+    for port in ([] if server else range(cfg["port"], cfg["port"] + 20)):
         try:
             srv = ThreadingHTTPServer(("127.0.0.1", port), H)
             break
@@ -152,7 +241,10 @@ def serve(store, cfg, demo=False, open_browser=False):
         raise SystemExit("Bo'sh port topilmadi.")
     state["srv"], state["port"] = srv, srv.server_address[1]
     url = f"http://localhost:{srv.server_address[1]}"
-    print(f"\nUzum tovar kuzatuvi ishlayapti:  {url}\n(To'xtatish: paneldagi «To'xtatish» tugmasi yoki Ctrl+C)\n")
+    if server:
+        print(f"Uzum tovar kuzatuvi server rejimida ishlayapti, port {state['port']}", flush=True)
+    else:
+        print(f"\nUzum tovar kuzatuvi ishlayapti:  {url}\n(To'xtatish: paneldagi «To'xtatish» tugmasi yoki Ctrl+C)\n")
     if open_browser:
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:

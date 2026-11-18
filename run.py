@@ -20,7 +20,7 @@ def main():
     cmd = args[0] if args else "serve"
 
     # Avval yangilanish: kod o'zgargan bo'lsa, yangi kod bilan qaytadan ishga tushamiz.
-    if cmd == "serve" and "--no-update" not in flags:
+    if cmd == "serve" and "--no-update" not in flags and not os.environ.get("UZUM_SERVER"):
         from uzum_tracker import updater
         if updater.update_on_start():
             sys.exit(subprocess.call([sys.executable, os.path.abspath(__file__), "--no-update"]
@@ -35,7 +35,7 @@ def main():
 
     cfg = config.load()
 
-    if cmd == "serve":      # allaqachon ishlab turgan bo'lsa, ikkinchisini ochmaymiz
+    if cmd == "serve" and not os.environ.get("UZUM_SERVER"):      # allaqachon ishlab turgan bo'lsa, ikkinchisini ochmaymiz
         import json, urllib.request, webbrowser
         for port in range(cfg["port"], cfg["port"] + 20):
             try:

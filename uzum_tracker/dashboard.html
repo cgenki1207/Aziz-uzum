@@ -160,13 +160,19 @@ function draw(){
 }
 let forced=false;
 function showSetup(on,cancel){$('overlay').classList.toggle('on',on);$('setupCancel').style.display=cancel?'':'none';if(on)$('tokenInput').focus()}
-async function load(){try{const d=await (await fetch('/api/report')).json();
+let lastTag=null;
+async function load(){try{const r=await fetch('/api/report');
+  if(r.status===401){location.reload();return}
+  const tag=r.headers.get('ETag');if(tag&&tag===lastTag&&R)return;   // o'zgarmagan — qayta chizmaymiz
+  const d=await r.json();lastTag=tag;
   if(d.setup){R=null;showSetup(true,false);return}
-  R=d;if(!forced)showSetup(false);draw()}catch(e){offline()}}
-const OFF="Dastur ishlamayapti. Ish stolidagi «Uzum Tracker» ni (Windows'da «Uzum Tracker.bat») qayta oching, keyin shu sahifani yangilang.";
+  R=d;if(R.server){$('quitBtn').textContent='Chiqish';OFF=OFF_SERVER}
+  if(!forced)showSetup(false);draw()}catch(e){offline()}}
+const OFF_SERVER="Server bilan aloqa yo'q. Internetni tekshirib, sahifani yangilang. Server uxlab qolgan bo'lsa, 1–2 daqiqada uyg'onadi.";
+let OFF="Dastur ishlamayapti. Ish stolidagi «Uzum Tracker» ni (Windows'da «Uzum Tracker.bat») qayta oching, keyin shu sahifani yangilang.";
 function offline(){$('meta').textContent=OFF;$('setupErr').textContent=OFF}
 const post=p=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-$('quitBtn').onclick=async()=>{if(!confirm("Dastur to'xtatilsinmi? Qayta ochish uchun «Uzum Tracker» ni bosasiz."))return;try{await post('/api/quit')}catch(e){}stopped=true;document.body.innerHTML='<div class="empty" style="padding:80px 20px">Dastur to\'xtatildi. Qayta ochish uchun «Uzum Tracker» ni bosing.</div>'};
+$('quitBtn').onclick=async()=>{if(R&&R.server){location.href='/logout';return}if(!confirm("Dastur to'xtatilsinmi? Qayta ochish uchun «Uzum Tracker» ni bosasiz."))return;try{await post('/api/quit')}catch(e){}stopped=true;document.body.innerHTML='<div class="empty" style="padding:80px 20px">Dastur to\'xtatildi. Qayta ochish uchun «Uzum Tracker» ni bosing.</div>'};
 $('warn').onclick=async e=>{if(e.target.id!=='updBtn')return;e.target.disabled=true;e.target.textContent='Yangilanmoqda…';try{await post('/api/restart')}catch(x){}setTimeout(()=>location.reload(),9000)};
 let stopped=false;
 $('keyBtn').onclick=()=>{forced=true;$('setupErr').textContent='';showSetup(true,true)};
@@ -183,7 +189,8 @@ $('syncBtn').onclick=async()=>{await fetch('/api/sync',{method:'POST',headers:{'
 $('csv').onclick=()=>{const T=TABS[tab];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
   const txt=[T.cols.map(c=>q(c[1])).join(';')].concat(rowsFor().map(r=>T.cols.map(c=>q(r[c[0]])).join(';'))).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+txt],{type:'text/csv'}));a.download='uzum-'+tab+'.csv';a.click()};
-load();setInterval(()=>{if(!stopped)load()},15000);
+load();setInterval(()=>{if(!stopped&&!document.hidden)load()},20000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!stopped)load()});
 </script>
 </body>
 </html>
