@@ -138,8 +138,9 @@ def serve(store, cfg, demo=False, open_browser=False):
                      in ("localhost", "127.0.0.1"))
 
         def ip(self):
+            # Oxirgi qiymatni proksi (Google/Caddy) o'zi qo'shadi; birinchisini mijoz soxtalashtirishi mumkin
             fwd = self.headers.get("X-Forwarded-For")
-            return fwd.split(",")[0].strip() if fwd else self.client_address[0]
+            return fwd.split(",")[-1].strip() if fwd else self.client_address[0]
 
         def authed(self):
             return auth is None or auth.valid(self.headers.get("Cookie"))
@@ -179,6 +180,13 @@ def serve(store, cfg, demo=False, open_browser=False):
                 rep["version"], rep["update"] = state["version"], state["update"]
                 rep["server"] = server
                 self.send(200, rep, etag=etag)
+            elif path == "/api/wait":
+                # Yangilanish tugaguncha (ko'pi bilan 25 s) javobni ushlab turadi. Cloud Run protsessorni faqat
+                # so'rov ochiq paytda beradi — panel shu so'rovni takrorlab turgani uchun yangilanish to'xtab qolmaydi.
+                end = time.time() + 25
+                while state["running"] and time.time() < end:
+                    time.sleep(0.5)
+                self.send(200, {"running": state["running"]})
             elif path == "/logout":
                 self.send(303, b"", "text/plain", headers={
                     "Location": "/", "Set-Cookie": f"{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict"})

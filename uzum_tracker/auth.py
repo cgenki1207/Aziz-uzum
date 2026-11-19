@@ -5,6 +5,7 @@ parolni bilgan odamga ochiq bo'lishi kerak. Parol APP_PASSWORD muhit o'zgaruvchi
 """
 import hashlib
 import hmac
+import os
 import secrets
 import threading
 import time
@@ -19,12 +20,17 @@ WINDOW, PER_IP, GLOBAL = 900, 8, 40   # 15 daqiqada: bitta IP dan 8, jami 40 xat
 class Auth:
     def __init__(self, password):
         self.password = password.encode("utf-8")
-        salt_file = DATA / "session_salt"
-        DATA.mkdir(parents=True, exist_ok=True)
-        if not salt_file.exists():
-            salt_file.write_text(secrets.token_hex(32))
+        # Cloud Run'da disk har uyg'onganda tozalanadi, shuning uchun u yerda tuz SESSION_SECRET'dan olinadi —
+        # aks holda server har uxlab turganda parolni qayta kiritishga to'g'ri kelardi.
+        salt = os.environ.get("SESSION_SECRET", "")
+        if not salt:
+            salt_file = DATA / "session_salt"
+            DATA.mkdir(parents=True, exist_ok=True)
+            if not salt_file.exists():
+                salt_file.write_text(secrets.token_hex(32))
+            salt = salt_file.read_text()
         # Parol o'zgarsa eski sessiyalar o'z-o'zidan bekor bo'ladi
-        self.key = hashlib.sha256(salt_file.read_text().encode() + b"|" + self.password).digest()
+        self.key = hashlib.sha256(salt.encode() + b"|" + self.password).digest()
         self.fails = []          # (vaqt, ip)
         self.lock = threading.Lock()
 

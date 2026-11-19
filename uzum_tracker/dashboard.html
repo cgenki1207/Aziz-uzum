@@ -167,7 +167,12 @@ async function load(){try{const r=await fetch('/api/report');
   const d=await r.json();lastTag=tag;
   if(d.setup){R=null;showSetup(true,false);return}
   R=d;if(R.server){$('quitBtn').textContent='Chiqish';OFF=OFF_SERVER}
-  if(!forced)showSetup(false);draw()}catch(e){offline()}}
+  if(!forced)showSetup(false);draw();if(R.server&&R.sync.running)follow()}catch(e){offline()}}
+// Serverda (Cloud Run) yangilanish faqat so'rov ochiq turganda ishlaydi — tugaguncha kutish so'rovini ushlab turamiz
+let following=false;
+async function follow(){if(following)return;following=true;
+  try{while(!stopped){const r=await fetch('/api/wait');if(!r.ok)break;const d=await r.json();await load();if(!d.running)break}}catch(e){}
+  following=false}
 const OFF_SERVER="Server bilan aloqa yo'q. Internetni tekshirib, sahifani yangilang. Server uxlab qolgan bo'lsa, 1–2 daqiqada uyg'onadi.";
 let OFF="Dastur ishlamayapti. Ish stolidagi «Uzum Tracker» ni (Windows'da «Uzum Tracker.bat») qayta oching, keyin shu sahifani yangilang.";
 function offline(){$('meta').textContent=OFF;$('setupErr').textContent=OFF}
